@@ -24,14 +24,14 @@ impl<E: Edge, W> WeightedEdge<W> for (E, W) {
 }
 
 macro_rules! edge_impl {
-        ($t:ty) => {
-            impl Edge for $t {
-                fn to(&self) -> usize {
-                    *self as usize
-                }
+    ($t:ty) => {
+        impl Edge for $t {
+            fn to(&self) -> usize {
+                *self as usize
             }
-        };
-    }
+        }
+    };
+}
 
 edge_impl!(usize);
 edge_impl!(isize);

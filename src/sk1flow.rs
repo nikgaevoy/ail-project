@@ -14,6 +14,7 @@ pub struct SK1Flow<T: Default + Clone + Ord>
     excess: Vec<T>,
 }
 
+#[allow(dead_code)]
 impl<T: Default + Clone + Ord> SK1Flow<T>
     where
             for<'a> T: AddAssign<&'a T> + SubAssign<&'a T>,
