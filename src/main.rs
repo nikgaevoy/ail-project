@@ -1,46 +1,51 @@
-mod cdcl;
-mod simple_cdcl;
+use ail_project::cdcl;
+use ail_project::cdcl::decision::DecideFirstVariable;
+use ail_project::cdcl::first_uip::FirstUIP;
+use clap::Parser;
+use clio::*;
+use std::io::{BufReader, Write};
 
-use crate::cdcl::propagation::Formula;
-use cdcl::*;
-use rand::{thread_rng, Rng};
+#[derive(Parser)]
+struct Opt {
+    /// Input file, use '-' for stdin
+    #[clap(value_parser, default_value = "-")]
+    input: Input,
+
+    /// Output file '-' for stdout
+    #[clap(long, short, value_parser, default_value = "-")]
+    output: Output,
+
+    /// Directory to store log files in
+    #[clap(long, short, value_parser = clap::value_parser!(ClioPath).exists().is_dir(), default_value = ".")]
+    log_dir: ClioPath,
+}
 
 fn main() {
-    let n: usize = 30;
+    let mut opt = Opt::parse();
 
-    let mut formula: Formula = vec![];
+    let (n, formula) = cdcl::read_dimacs(&mut BufReader::new(opt.input));
 
-    let mut rng = thread_rng();
+    let ans = cdcl::cdcl_solve::<DecideFirstVariable, FirstUIP>(n, &mut formula.clone());
 
-    for test in 0.. {
-        let bnd = n as Literal;
+    match ans {
+        None => {
+            writeln!(opt.output, "UNSAT").unwrap();
+        }
+        Some(assignment) => {
+            assert!(cdcl::is_satisfying(&formula, &assignment));
 
-        formula.push((0..3).map(|_| rng.gen_range(-bnd..bnd)).collect());
+            writeln!(opt.output, "SAT").unwrap();
 
-        let mut incremental = formula.clone();
+            let assignment: Vec<_> = assignment
+                .iter()
+                .copied()
+                .map(|v| match v {
+                    false => "0",
+                    true => "1",
+                })
+                .collect();
 
-        let mut alg = CDCL::new(
-            &mut incremental,
-            decision::DecideFirstVariable::default(),
-            first_uip::FirstUIP::new(n),
-        );
-
-        let new = alg.solve();
-
-        let old = simple_cdcl::cdcl_solve(&mut formula.clone()).is_some();
-
-        assert_eq!(new, old);
-
-        if !new {
-            println!(
-                "ok: {}\tformula size: {}\tlearned: {}",
-                test,
-                formula.len(),
-                incremental.len() - formula.len()
-            );
-            formula.clear();
-        } else {
-            assert!(is_satisfying(&formula, &alg.get_assignment()));
+            writeln!(opt.output, "{}", assignment.join(" ")).unwrap();
         }
     }
 }

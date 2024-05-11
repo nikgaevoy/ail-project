@@ -4,6 +4,10 @@ pub struct DecideFirstVariable {}
 use crate::cdcl::propagation::*;
 
 impl DecisionHeuristic for DecideFirstVariable {
+    fn from_formula(_n: usize, _formula: &Formula) -> Self {
+        Self::default()
+    }
+
     fn backtrack_and_add_clause(
         &mut self,
         _formula: &Formula,

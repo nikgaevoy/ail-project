@@ -14,21 +14,11 @@ pub struct CDCL<'a, D: DecisionHeuristic, C: ConflictAnalysis> {
 
 impl<'a, D: DecisionHeuristic, C: ConflictAnalysis> CDCL<'a, D, C> {
     pub fn new(
+        n: usize,
         formula: &'a mut Formula,
         decision_heuristic: D,
         conflict_analysis: C,
     ) -> CDCL<'a, D, C> {
-        let n = formula
-            .iter()
-            .flat_map(|clause| {
-                clause
-                    .iter()
-                    .copied()
-                    .map(|literal| variable_name(literal) + 1)
-            })
-            .max()
-            .unwrap_or(0);
-
         CDCL::<'a> {
             trail: Trail::new(n, formula.len()),
             formula,
@@ -144,15 +134,22 @@ impl<'a, D: DecisionHeuristic, C: ConflictAnalysis> CDCL<'a, D, C> {
             self.add_learned_clause(clause, Unit(uip));
         }
 
-        self.decision_heuristic.backtrack_and_add_clause(&self.formula, &self.trail, back_level, new_clause_id);
+        self.decision_heuristic.backtrack_and_add_clause(
+            &self.formula,
+            &self.trail,
+            back_level,
+            new_clause_id,
+        );
 
         new_clause_id
     }
 
     fn propagate_literal(&mut self, literal: Literal, reason_id: usize) {
         self.trail.propagate_literal(literal, reason_id);
-        self.decision_heuristic.propagate_literal(&self.formula, &self.trail, literal, reason_id);
-        self.conflict_analysis.propagate_literal(&self.formula, &self.trail, literal, reason_id);
+        self.decision_heuristic
+            .propagate_literal(&self.formula, &self.trail, literal, reason_id);
+        self.conflict_analysis
+            .propagate_literal(&self.formula, &self.trail, literal, reason_id);
     }
 
     fn process_unit_clauses(&mut self) -> bool {
@@ -239,7 +236,8 @@ impl<'a, D: DecisionHeuristic, C: ConflictAnalysis> CDCL<'a, D, C> {
                 }
                 Some(literal) => {
                     self.trail.decide_literal(literal);
-                    self.conflict_analysis.decide_literal(&self.formula, &self.trail, literal);
+                    self.conflict_analysis
+                        .decide_literal(&self.formula, &self.trail, literal);
                 }
             }
         }
@@ -247,6 +245,8 @@ impl<'a, D: DecisionHeuristic, C: ConflictAnalysis> CDCL<'a, D, C> {
 }
 
 pub trait DecisionHeuristic {
+    fn from_formula(n: usize, formula: &Formula) -> Self;
+
     fn backtrack_and_add_clause(
         &mut self,
         formula: &Formula,
@@ -265,6 +265,8 @@ pub trait DecisionHeuristic {
 }
 
 pub trait ConflictAnalysis {
+    fn from_formula(n: usize, formula: &Formula) -> Self;
+
     fn analyze_conflict(
         &mut self,
         formula: &Formula,

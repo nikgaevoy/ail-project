@@ -16,6 +16,10 @@ impl FirstUIP {
 }
 
 impl ConflictAnalysis for FirstUIP {
+    fn from_formula(n: usize, _formula: &Formula) -> Self {
+        Self::new(n)
+    }
+
     fn analyze_conflict(
         &mut self,
         formula: &Formula,
