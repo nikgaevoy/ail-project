@@ -20,6 +20,7 @@ enum Solver {
     AllUIP,
     SaturatingAllUIP,
     RelSat,
+    MinCut,
 }
 
 #[derive(Parser)]
@@ -57,13 +58,19 @@ fn main() {
         AllUIP => get_solver::<CutAllUIP>(),
         SaturatingAllUIP => get_solver::<CutSatAllUIP>(),
         RelSat => get_solver::<CutRelSat>(),
+        MinCut => get_solver::<CutMinimal>(),
     };
 
     let start = SystemTime::now();
 
     let ans = solver(n, &mut formula.clone());
 
-    writeln!(opt.output, "Time used: {}s", start.elapsed().unwrap().as_secs_f64()).unwrap();
+    writeln!(
+        opt.output,
+        "Time used: {}s",
+        start.elapsed().unwrap().as_secs_f64()
+    )
+    .unwrap();
 
     match ans {
         None => {
