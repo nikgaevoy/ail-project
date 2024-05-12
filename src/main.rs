@@ -1,9 +1,9 @@
 use ail_project::cdcl;
 use ail_project::cdcl::decision::DecideFirstVariable;
-use ail_project::cdcl::first_uip::FirstUIP;
 use clap::Parser;
 use clio::*;
 use std::io::{BufReader, Write};
+use ail_project::cdcl::mincut::CutFirstUIP;
 
 #[derive(Parser)]
 struct Opt {
@@ -25,7 +25,7 @@ fn main() {
 
     let (n, formula) = cdcl::read_dimacs(&mut BufReader::new(opt.input));
 
-    let ans = cdcl::cdcl_solve::<DecideFirstVariable, FirstUIP>(n, &mut formula.clone());
+    let ans = cdcl::cdcl_solve::<DecideFirstVariable, CutFirstUIP>(n, &mut formula.clone());
 
     match ans {
         None => {

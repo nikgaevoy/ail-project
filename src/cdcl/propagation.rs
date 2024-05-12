@@ -140,6 +140,12 @@ impl<'a, D: DecisionHeuristic, C: ConflictAnalysis> CDCL<'a, D, C> {
             back_level,
             new_clause_id,
         );
+        self.conflict_analysis.backtrack_and_add_clause(
+            &self.formula,
+            &self.trail,
+            back_level,
+            new_clause_id,
+        );
 
         new_clause_id
     }
@@ -189,11 +195,17 @@ impl<'a, D: DecisionHeuristic, C: ConflictAnalysis> CDCL<'a, D, C> {
                             return false;
                         }
 
-                        let (conflict, uip) = self.conflict_analysis.analyze_conflict(
+                        let conflict = self.conflict_analysis.analyze_conflict(
                             &self.formula,
                             &self.trail,
                             self.formula[clause_id].clone(),
                         );
+
+                        let uip = conflict
+                            .iter()
+                            .copied()
+                            .max_by_key(|literal| self.trail.assignment[variable_name(*literal)].decision_level())
+                            .unwrap();
 
                         let new_clause_id = self.backtrack_and_add_uip_clause(conflict, uip);
 
@@ -272,7 +284,14 @@ pub trait ConflictAnalysis {
         formula: &Formula,
         trail: &Trail,
         conflict: Clause,
-    ) -> (Clause, Literal);
+    ) -> Clause;
+    fn backtrack_and_add_clause(
+        &mut self,
+        formula: &Formula,
+        trail: &Trail,
+        level: usize,
+        clause_id: usize,
+    );
     fn propagate_literal(
         &mut self,
         formula: &Formula,

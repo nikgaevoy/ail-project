@@ -25,7 +25,7 @@ impl ConflictAnalysis for FirstUIP {
         formula: &Formula,
         trail: &Trail,
         mut conflict: Clause,
-    ) -> (Clause, Literal) {
+    ) -> Clause {
         for variable in conflict.iter().map(|literal| variable_name(*literal)) {
             self.conflict_assignment[variable] = true;
         }
@@ -59,10 +59,19 @@ impl ConflictAnalysis for FirstUIP {
                         )
                     });
 
-                    return (conflict, !trail.to_literal(uip));
+                    return conflict;
                 }
             }
         }
+    }
+
+    fn backtrack_and_add_clause(
+        &mut self,
+        _formula: &Formula,
+        _trail: &Trail,
+        _level: usize,
+        _clause_id: usize,
+    ) {
     }
 
     fn propagate_literal(

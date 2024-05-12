@@ -1,13 +1,14 @@
-mod graph;
+pub(crate) mod graph;
 
+use crate::sk1flow::graph::Edge;
 use graph::WeightedEdge;
+use std::collections::VecDeque;
 use std::mem;
 use std::ops::{AddAssign, SubAssign};
-
 #[derive(Debug, Default, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 pub struct SK1Flow<T: Default + Clone + Ord>
-    where
-            for<'a> T: AddAssign<&'a T> + SubAssign<&'a T>,
+where
+    for<'a> T: AddAssign<&'a T> + SubAssign<&'a T>,
 {
     edges: Vec<(usize, T)>,
     graph: Vec<Vec<usize>>,
@@ -16,8 +17,8 @@ pub struct SK1Flow<T: Default + Clone + Ord>
 
 #[allow(dead_code)]
 impl<T: Default + Clone + Ord> SK1Flow<T>
-    where
-            for<'a> T: AddAssign<&'a T> + SubAssign<&'a T>,
+where
+    for<'a> T: AddAssign<&'a T> + SubAssign<&'a T>,
 {
     pub fn new() -> Self {
         Self {
@@ -50,13 +51,7 @@ impl<T: Default + Clone + Ord> SK1Flow<T>
         self.graph.push(vec![]);
     }
 
-    pub fn add_double_edge(
-        &mut self,
-        from: usize,
-        to: usize,
-        capacity: T,
-        reverse_capacity: T,
-    ) {
+    pub fn add_double_edge(&mut self, from: usize, to: usize, capacity: T, reverse_capacity: T) {
         self.graph[from].push(self.edges.len());
         self.edges.push((to, capacity));
         self.graph[to].push(self.edges.len());
@@ -125,6 +120,25 @@ impl<T: Default + Clone + Ord> SK1Flow<T>
         }
 
         mem::replace(&mut self.excess[sink], T::default())
+    }
+
+    pub fn cut(&self, sink: usize) -> Vec<bool> {
+        let mut used = vec![false; self.graph.len()];
+
+        let mut q = VecDeque::new();
+        q.push_back(sink);
+
+        while let Some(v) = q.pop_front() {
+            if !mem::replace(&mut used[v], true) {
+                for edge in &self.graph[v] {
+                    if self.edges[edge ^ 1].1 != Default::default() {
+                        q.push_back(self.edges[*edge].to());
+                    }
+                }
+            }
+        }
+
+        used
     }
 
     pub fn edges(&self) -> &Vec<(usize, T)> {

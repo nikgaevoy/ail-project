@@ -1,5 +1,6 @@
 pub mod decision;
 pub mod first_uip;
+pub mod mincut;
 pub mod propagation;
 
 use crate::cdcl::propagation::{ConflictAnalysis, DecisionHeuristic};
