@@ -8,6 +8,7 @@ use ail_project::cdcl::Formula;
 use clap::Parser;
 use clio::*;
 use std::io::{BufReader, Write};
+use std::time::SystemTime;
 
 #[derive(clap::ValueEnum, Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
 enum Solver {
@@ -58,7 +59,11 @@ fn main() {
         RelSat => get_solver::<CutRelSat>(),
     };
 
+    let start = SystemTime::now();
+
     let ans = solver(n, &mut formula.clone());
+
+    writeln!(opt.output, "Time used: {}s", start.elapsed().unwrap().as_secs_f64()).unwrap();
 
     match ans {
         None => {
