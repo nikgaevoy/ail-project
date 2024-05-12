@@ -94,9 +94,7 @@ impl<W: MinCutWeight, T: WeightHeuristic<W>> MinCutConflict<W, T> {
     }
 }
 
-impl<W: MinCutWeight + std::fmt::Debug, T: WeightHeuristic<W>> ConflictAnalysis
-    for MinCutConflict<W, T>
-{
+impl<W: MinCutWeight, T: WeightHeuristic<W>> ConflictAnalysis for MinCutConflict<W, T> {
     fn from_formula(n: usize, formula: &Formula) -> Self {
         Self {
             graph: vec![vec![]; 2],
@@ -146,14 +144,6 @@ impl<W: MinCutWeight + std::fmt::Debug, T: WeightHeuristic<W>> ConflictAnalysis
         let mut flow = SK1Flow::from_graph(&self.graph, excess);
         flow.flow(Self::SINK);
         let cut = flow.cut(Self::SINK);
-
-        if !(cut[Self::SINK] && !cut[Self::SOURCE]) {
-            for v in 0..self.graph.len() {
-                for (u, w) in &self.graph[v] {
-                    println!("{} {} {:?}", v, u, w);
-                }
-            }
-        }
 
         debug_assert!(cut[Self::SINK] && !cut[Self::SOURCE]);
 

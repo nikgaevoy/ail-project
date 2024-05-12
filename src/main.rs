@@ -1,9 +1,25 @@
+use self::Solver::*;
 use ail_project::cdcl;
 use ail_project::cdcl::decision::DecideFirstVariable;
-use ail_project::cdcl::mincut::CutFirstUIP;
+use ail_project::cdcl::first_uip::FirstUIP;
+use ail_project::cdcl::mincut::*;
+use ail_project::cdcl::propagation::ConflictAnalysis;
+use ail_project::cdcl::Formula;
 use clap::Parser;
 use clio::*;
 use std::io::{BufReader, Write};
+
+#[derive(clap::ValueEnum, Debug, Default, Copy, Clone, Ord, PartialOrd, Eq, PartialEq, Hash)]
+enum Solver {
+    #[default]
+    FirstUIPBasic,
+    FirstUIP,
+    SecondUIP,
+    ThirdUIP,
+    AllUIP,
+    SaturatingAllUIP,
+    RelSat,
+}
 
 #[derive(Parser)]
 struct Opt {
@@ -15,9 +31,16 @@ struct Opt {
     #[clap(long, short, value_parser, default_value = "-")]
     output: Output,
 
-    /// Directory to store log files in
-    #[clap(long, short, value_parser = clap::value_parser!(ClioPath).exists().is_dir(), default_value = ".")]
-    log_dir: ClioPath,
+    #[clap(long, short, default_value_t, value_enum)]
+    solver: Solver,
+}
+
+fn get_solver<C: ConflictAnalysis + 'static>(
+) -> Box<dyn FnOnce(usize, &mut Formula) -> Option<Vec<bool>>> {
+    #[cfg(debug_assertions)]
+    eprintln!("Running: {}", std::any::type_name::<C>());
+
+    Box::new(cdcl::cdcl_solve::<DecideFirstVariable, C>)
 }
 
 fn main() {
@@ -25,7 +48,17 @@ fn main() {
 
     let (n, formula) = cdcl::read_dimacs(&mut BufReader::new(opt.input));
 
-    let ans = cdcl::cdcl_solve::<DecideFirstVariable, CutFirstUIP>(n, &mut formula.clone());
+    let solver = match opt.solver {
+        FirstUIPBasic => get_solver::<FirstUIP>(),
+        FirstUIP => get_solver::<CutFirstUIP>(),
+        SecondUIP => get_solver::<CutSecondUIP>(),
+        ThirdUIP => get_solver::<CutThirdUIP>(),
+        AllUIP => get_solver::<CutAllUIP>(),
+        SaturatingAllUIP => get_solver::<CutSatAllUIP>(),
+        RelSat => get_solver::<CutRelSat>(),
+    };
+
+    let ans = solver(n, &mut formula.clone());
 
     match ans {
         None => {
