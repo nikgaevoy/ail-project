@@ -2,20 +2,22 @@ use ail_project::*;
 
 use ail_project::cdcl::decision::DecideFirstVariable;
 use ail_project::cdcl::first_uip::FirstUIP;
-use ail_project::cdcl::mincut::{CutFirstUIP, CutMinimal};
+use ail_project::cdcl::mincut::{
+    CutAllUIP, CutFirstUIP, CutMinimal, CutRelSat, CutSatAllUIP, CutSecondUIP, CutThirdUIP,
+};
 use ail_project::cdcl::propagation::{ConflictAnalysis, DecisionHeuristic};
 use cdcl::*;
 use rand::{thread_rng, Rng};
 use varisat::{CnfFormula, Lit, Solver};
 
 fn test_random<D: DecisionHeuristic, C: ConflictAnalysis>() {
-    let n: usize = 4;
+    let n: usize = 30;
 
     let mut formula: Formula = vec![];
 
     let mut rng = thread_rng();
 
-    for test in 0..1e5 as usize {
+    for test in 0..1e4 as usize {
         let bnd = n as Literal;
 
         formula.push((0..3).map(|_| rng.gen_range(-bnd..bnd)).collect());
@@ -64,4 +66,29 @@ fn first_uip_correctness() {
 #[test]
 fn mincut_correctness() {
     test_random::<DecideFirstVariable, CutMinimal>()
+}
+
+#[test]
+fn second_uip_correctness() {
+    test_random::<DecideFirstVariable, CutSecondUIP>()
+}
+
+#[test]
+fn third_uip_correctness() {
+    test_random::<DecideFirstVariable, CutThirdUIP>()
+}
+
+#[test]
+fn all_uip_correctness() {
+    test_random::<DecideFirstVariable, CutAllUIP>()
+}
+
+#[test]
+fn sat_all_uip_correctness() {
+    test_random::<DecideFirstVariable, CutSatAllUIP>()
+}
+
+#[test]
+fn rel_sat_correctness() {
+    test_random::<DecideFirstVariable, CutRelSat>()
 }

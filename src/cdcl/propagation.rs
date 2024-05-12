@@ -204,7 +204,9 @@ impl<'a, D: DecisionHeuristic, C: ConflictAnalysis> CDCL<'a, D, C> {
                         let uip = conflict
                             .iter()
                             .copied()
-                            .max_by_key(|literal| self.trail.assignment[variable_name(*literal)].decision_level())
+                            .max_by_key(|literal| {
+                                self.trail.assignment[variable_name(*literal)].decision_level()
+                            })
                             .unwrap();
 
                         let new_clause_id = self.backtrack_and_add_uip_clause(conflict, uip);
@@ -279,12 +281,7 @@ pub trait DecisionHeuristic {
 pub trait ConflictAnalysis {
     fn from_formula(n: usize, formula: &Formula) -> Self;
 
-    fn analyze_conflict(
-        &mut self,
-        formula: &Formula,
-        trail: &Trail,
-        conflict: Clause,
-    ) -> Clause;
+    fn analyze_conflict(&mut self, formula: &Formula, trail: &Trail, conflict: Clause) -> Clause;
     fn backtrack_and_add_clause(
         &mut self,
         formula: &Formula,

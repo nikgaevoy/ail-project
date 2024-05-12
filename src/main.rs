@@ -1,9 +1,9 @@
 use ail_project::cdcl;
 use ail_project::cdcl::decision::DecideFirstVariable;
+use ail_project::cdcl::mincut::CutFirstUIP;
 use clap::Parser;
 use clio::*;
 use std::io::{BufReader, Write};
-use ail_project::cdcl::mincut::CutFirstUIP;
 
 #[derive(Parser)]
 struct Opt {

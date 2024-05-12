@@ -94,7 +94,9 @@ impl<W: MinCutWeight, T: WeightHeuristic<W>> MinCutConflict<W, T> {
     }
 }
 
-impl<W: MinCutWeight, T: WeightHeuristic<W>> ConflictAnalysis for MinCutConflict<W, T> {
+impl<W: MinCutWeight + std::fmt::Debug, T: WeightHeuristic<W>> ConflictAnalysis
+    for MinCutConflict<W, T>
+{
     fn from_formula(n: usize, formula: &Formula) -> Self {
         Self {
             graph: vec![vec![]; 2],
@@ -114,7 +116,7 @@ impl<W: MinCutWeight, T: WeightHeuristic<W>> ConflictAnalysis for MinCutConflict
         }
 
         let mut excess = vec![W::zero(); self.graph.len()];
-        excess[0] = self.weight_heuristic.source_excess(); // infinity, informally
+        excess[0] = self.weight_heuristic.source_excess(conflict_level); // infinity, informally
 
         // vertex weights
         for v in (2..self.graph.len()).step_by(2) {
@@ -144,6 +146,16 @@ impl<W: MinCutWeight, T: WeightHeuristic<W>> ConflictAnalysis for MinCutConflict
         let mut flow = SK1Flow::from_graph(&self.graph, excess);
         flow.flow(Self::SINK);
         let cut = flow.cut(Self::SINK);
+
+        if !(cut[Self::SINK] && !cut[Self::SOURCE]) {
+            for v in 0..self.graph.len() {
+                for (u, w) in &self.graph[v] {
+                    println!("{} {} {:?}", v, u, w);
+                }
+            }
+        }
+
+        debug_assert!(cut[Self::SINK] && !cut[Self::SOURCE]);
 
         let mut clause = vec![];
 
@@ -188,15 +200,11 @@ impl<W: MinCutWeight, T: WeightHeuristic<W>> ConflictAnalysis for MinCutConflict
     fn propagate_literal(
         &mut self,
         formula: &Formula,
-        trail: &Trail,
+        _trail: &Trail,
         literal: Literal,
         reason_id: usize,
     ) {
         self.add_literal(literal, Some(&formula[reason_id]));
-
-        if trail.assignment[variable_name(literal)].decision_level() == 0 {
-            self.add_edge(Self::SOURCE, self.graph.len() - 2);
-        }
     }
 
     fn decide_literal(&mut self, _formula: &Formula, _trail: &Trail, literal: Literal) {
@@ -206,6 +214,6 @@ impl<W: MinCutWeight, T: WeightHeuristic<W>> ConflictAnalysis for MinCutConflict
 
 pub trait WeightHeuristic<W: Integer>: Default {
     fn from_formula(n: usize, formula: &Formula) -> Self;
-    fn source_excess(&self) -> W;
+    fn source_excess(&self, conflict_level: usize) -> W;
     fn gen_vertex_weight(&self, level: usize, conflict_level: usize, is_decision: bool) -> W;
 }

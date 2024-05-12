@@ -309,9 +309,7 @@ impl<'a> CDCL<'a> {
             .iter()
             .copied()
             .filter(|&literal| literal != uip)
-            .max_by_key(|&literal| {
-                self.trail.assignment[variable_name(literal)].decision_level()
-            });
+            .max_by_key(|&literal| self.trail.assignment[variable_name(literal)].decision_level());
 
         let back_level = second_deepest.map_or(0, |back| {
             self.trail.assignment[variable_name(back)].decision_level()

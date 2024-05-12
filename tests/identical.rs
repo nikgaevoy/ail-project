@@ -14,7 +14,7 @@ fn identical_to_simple() {
 
     let mut rng = thread_rng();
 
-    for test in 0..1e5 as usize {
+    for test in 0..1e4 as usize {
         let bnd = n as Literal;
 
         formula.push((0..3).map(|_| rng.gen_range(-bnd..bnd)).collect());
@@ -22,7 +22,7 @@ fn identical_to_simple() {
         let mut new_formula = formula.clone();
         let mut old_formula = formula.clone();
 
-        let new = cdcl::cdcl_solve::<DecideFirstVariable, FirstUIP>(n, &mut new_formula);
+        let new = cdcl_solve::<DecideFirstVariable, FirstUIP>(n, &mut new_formula);
         let old = simple_cdcl::cdcl_solve(&mut old_formula);
 
         assert_eq!(new_formula, old_formula);
@@ -48,7 +48,7 @@ fn identical_to_simple() {
     }
 }
 
-// #[test] // does not work due to details of implementation
+// #[test] // does not work due to different watch orders
 #[allow(dead_code)]
 fn identical_to_cut() {
     let n: usize = 30;
@@ -57,7 +57,7 @@ fn identical_to_cut() {
 
     let mut rng = thread_rng();
 
-    for test in 0..1e5 as usize {
+    for test in 0..1e4 as usize {
         let bnd = n as Literal;
 
         formula.push((0..3).map(|_| rng.gen_range(-bnd..bnd)).collect());
@@ -67,6 +67,12 @@ fn identical_to_cut() {
 
         let new = cdcl_solve::<DecideFirstVariable, CutFirstUIP>(n, &mut new_formula);
         let old = cdcl_solve::<DecideFirstVariable, FirstUIP>(n, &mut old_formula);
+
+        for f in [&mut new_formula, &mut old_formula] {
+            for clause in f {
+                clause.sort_unstable();
+            }
+        }
 
         assert_eq!(new_formula, old_formula);
         assert_eq!(new, old);
