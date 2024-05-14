@@ -1,6 +1,4 @@
-for f in benchmark/unsatisfiable/*.dimacs
+for s in "barrel" "longmult" "queueinvar"
 do
-    echo "Processing $f file..."
-
-    timeout 10s ./target/release/ail-project -s "$1" "$f" > "$f.$1.answer"
+	./benchmark_on_formula.sh "$1" "$s"
 done
